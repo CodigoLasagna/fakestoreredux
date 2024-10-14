@@ -1,4 +1,4 @@
-// ProductGrid.tsx
+// components/ProductGrid.tsx
 'use client';
 import React, { useEffect } from 'react';
 import { useAppDispatch, useAppSelector } from '@/store/store';
@@ -22,7 +22,6 @@ const ProductGrid: React.FC = () => {
     const handleAddToCart = (product: any) => {
         dispatch(addToCart(product)); // Agregar el producto al carrito
         dispatch(selectProduct(null)); // Ocultar el panel de detalles
-        // No ocultes el carrito aquí; manejar esto en el Cart directamente
     };
 
     if (loading) {
@@ -38,11 +37,11 @@ const ProductGrid: React.FC = () => {
             {products.map((product) => (
                 <div
                     key={product.id}
-                    className="border p-4 rounded cursor-pointer"
+                    className="border p-4 rounded cursor-pointer flex flex-col h-full" // Cambios aquí
                     onClick={() => handleProductClick(product)}
                 >
-                    <img src={product.image} alt={product.title} className="h-32 w-full object-cover" />
-                    <h2 className="text-lg font-semibold">{product.title}</h2>
+                    <img src={product.image} alt={product.title} className="h-32 w-full object-cover mb-4" />
+                    <h2 className="text-lg font-semibold flex-grow">{product.title}</h2> {/* flex-grow para que ocupe espacio */}
                     <p className="text-gray-600">${product.price}</p>
                     <button 
                         onClick={(e) => {
