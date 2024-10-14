@@ -32,11 +32,15 @@ const cartSlice = createSlice({
         addToCart: (state, action: PayloadAction<Product>) => {
             const existingItem = state.items.find(item => item.product.id === action.payload.id);
             if (existingItem) {
-                existingItem.quantity += 1;
+                existingItem.quantity += 1; // Incrementar cantidad si ya existe
             } else {
-                state.items.push({ product: action.payload, quantity: 1 });
+                state.items.push({ product: action.payload, quantity: 1 }); // Agregar nuevo producto
             }
             state.isCartVisible = true; // Mostrar el carrito al agregar un producto
+        },
+        removeFromCart: (state, action: PayloadAction<number>) => {
+            // Eliminar producto del carrito
+            state.items = state.items.filter(item => item.product.id !== action.payload);
         },
         toggleCartVisibility: (state) => {
             state.isCartVisible = !state.isCartVisible; // Alternar visibilidad
@@ -44,8 +48,14 @@ const cartSlice = createSlice({
         hideCart: (state) => {
             state.isCartVisible = false; // Ocultar el carrito
         },
+        setItemQuantity: (state, action: PayloadAction<{ id: number; quantity: number }>) => {
+            const item = state.items.find(item => item.product.id === action.payload.id);
+            if (item) {
+                item.quantity = action.payload.quantity; // Establecer la cantidad del producto
+            }
+        },
     },
 });
 
-export const { addToCart, toggleCartVisibility, hideCart } = cartSlice.actions;
+export const { addToCart, removeFromCart, toggleCartVisibility, hideCart, setItemQuantity } = cartSlice.actions;
 export default cartSlice.reducer;
