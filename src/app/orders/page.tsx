@@ -51,6 +51,10 @@ const OrdersPage: React.FC = () => {
                                             </li>
                                         ))}
                                     </ul>
+                                    <h3 className="font-semibold mt-4">Información de Envío:</h3>
+                                    <p>Nombre: {order.shipping.name}</p>
+                                    <p>Dirección: {order.shipping.address}</p>
+                                    <p>Método de Pago: {order.shipping.paymentMethod}</p>
                                 </div>
                             )}
                         </li>

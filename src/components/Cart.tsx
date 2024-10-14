@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useAppSelector, useAppDispatch } from '@/store/store';
 import { addToCart, removeFromCart, setItemQuantity, hideCart } from '@/store/cartSlice';
 import { createOrder } from '@/store/orderSlice';
@@ -21,19 +21,35 @@ const Cart: React.FC = () => {
         }
     });
 
+    const [shippingInfo, setShippingInfo] = useState({ name: '', address: '', paymentMethod: '' });
+    const [isCheckoutFormVisible, setCheckoutFormVisible] = useState(false);
+    const [error, setError] = useState('');
+
     const handleCheckout = () => {
+        // Validar la información de envío
+        if (!shippingInfo.name || !shippingInfo.address || !shippingInfo.paymentMethod) {
+            setError('Por favor, complete todos los campos.');
+            return;
+        }
+
         const order = {
-            id: Date.now(), // O usar un ID más adecuado
+            id: Date.now(),
             items: cartItems.map(item => ({
-                product: item.product, // Aquí pasamos el producto completo
+                product: item.product,
                 quantity: item.quantity
             })),
             total: parseFloat(totalPrice),
+            shipping: shippingInfo,
         };
         
-        dispatch(createOrder(order)); // Crear la orden
-        dispatch(hideCart()); // Ocultar el carrito
-        dispatch({ type: 'cart/clearCart' }); // Limpiar el carrito
+        dispatch(createOrder(order));
+        dispatch(hideCart());
+        dispatch({ type: 'cart/clearCart' });
+
+        // Limpiar el formulario después de crear la orden
+        setShippingInfo({ name: '', address: '', paymentMethod: '' });
+        setCheckoutFormVisible(false);
+        setError(''); // Reiniciar el mensaje de error
     };
 
     const handleAddQuantity = (id: number) => {
@@ -45,6 +61,19 @@ const Cart: React.FC = () => {
         if (newQuantity > 0) {
             dispatch(setItemQuantity({ id, quantity: newQuantity }));
         }
+    };
+
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const { name, value } = e.target;
+        setShippingInfo(prevState => ({
+            ...prevState,
+            [name]: value,
+        }));
+    };
+
+    const handleShowCheckoutForm = () => {
+        setCheckoutFormVisible(true);
+        setError(''); // Reiniciar el mensaje de error al mostrar el formulario
     };
 
     return (
@@ -68,7 +97,39 @@ const Cart: React.FC = () => {
                         ))}
                     </ul>
                     <p className="font-bold">Total: ${totalPrice}</p>
-                    <button onClick={handleCheckout} className="mt-4 bg-green-500 text-white rounded px-4 py-2">Checkout</button>
+                    {error && <p className="text-red-500">{error}</p>}
+                    {isCheckoutFormVisible ? (
+                        <div className="mt-4">
+                            <h3 className="text-lg font-semibold">Información de Envío</h3>
+                            <input
+                                type="text"
+                                name="name"
+                                placeholder="Nombre"
+                                value={shippingInfo.name}
+                                onChange={handleInputChange}
+                                className="border p-2 w-full mb-2"
+                            />
+                            <input
+                                type="text"
+                                name="address"
+                                placeholder="Dirección"
+                                value={shippingInfo.address}
+                                onChange={handleInputChange}
+                                className="border p-2 w-full mb-2"
+                            />
+                            <input
+                                type="text"
+                                name="paymentMethod"
+                                placeholder="Método de Pago"
+                                value={shippingInfo.paymentMethod}
+                                onChange={handleInputChange}
+                                className="border p-2 w-full mb-2"
+                            />
+                            <button onClick={handleCheckout} className="mt-2 bg-green-500 text-white rounded px-4 py-2">Confirmar Orden</button>
+                        </div>
+                    ) : (
+                        <button onClick={handleShowCheckoutForm} className="mt-4 bg-green-500 text-white rounded px-4 py-2">Checkout</button>
+                    )}
                 </div>
             )}
         </div>

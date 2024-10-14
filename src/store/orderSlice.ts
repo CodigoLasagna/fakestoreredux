@@ -1,16 +1,22 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { Product } from './cartSlice';  // Importa la interfaz Product
 
-// Modifica el tipo OrderItem para que incluya los detalles del producto
 interface OrderItem {
-    product: Product;  // Almacena el producto completo
+    product: Product;
     quantity: number;
+}
+
+interface ShippingInfo {
+    name: string;
+    address: string;
+    paymentMethod: string;
 }
 
 export interface Order {
     id: number;
     items: OrderItem[];
     total: number;
+    shipping: ShippingInfo;  // Agregar detalles de envío
 }
 
 interface OrderState {
