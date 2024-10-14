@@ -24,13 +24,27 @@ const Cart: React.FC = () => {
     const handleCheckout = () => {
         const order = {
             id: Date.now(), // O usar un ID más adecuado
-            items: cartItems.map(item => ({ productId: item.product.id, quantity: item.quantity })),
+            items: cartItems.map(item => ({
+                product: item.product, // Aquí pasamos el producto completo
+                quantity: item.quantity
+            })),
             total: parseFloat(totalPrice),
         };
         
         dispatch(createOrder(order)); // Crear la orden
         dispatch(hideCart()); // Ocultar el carrito
         dispatch({ type: 'cart/clearCart' }); // Limpiar el carrito
+    };
+
+    const handleAddQuantity = (id: number) => {
+        dispatch(setItemQuantity({ id, quantity: productCounts[id].quantity + 1 }));
+    };
+
+    const handleRemoveQuantity = (id: number) => {
+        const newQuantity = productCounts[id].quantity - 1;
+        if (newQuantity > 0) {
+            dispatch(setItemQuantity({ id, quantity: newQuantity }));
+        }
     };
 
     return (
