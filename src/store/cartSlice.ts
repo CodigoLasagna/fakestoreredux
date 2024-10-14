@@ -1,7 +1,7 @@
 // store/cartSlice.ts
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
-interface Product {
+export interface Product {
     id: number;
     title: string;
     price: number;
@@ -32,27 +32,30 @@ const cartSlice = createSlice({
         addToCart: (state, action: PayloadAction<Product>) => {
             const existingItem = state.items.find(item => item.product.id === action.payload.id);
             if (existingItem) {
-                existingItem.quantity += 1; // Incrementar cantidad si ya existe
+                existingItem.quantity += 1;
             } else {
-                state.items.push({ product: action.payload, quantity: 1 }); // Agregar nuevo producto
+                state.items.push({ product: action.payload, quantity: 1 });
             }
-            state.isCartVisible = true; // Mostrar el carrito al agregar un producto
+            state.isCartVisible = true;
         },
         removeFromCart: (state, action: PayloadAction<number>) => {
-            // Eliminar producto del carrito
             state.items = state.items.filter(item => item.product.id !== action.payload);
         },
         toggleCartVisibility: (state) => {
-            state.isCartVisible = !state.isCartVisible; // Alternar visibilidad
+            state.isCartVisible = !state.isCartVisible;
         },
         hideCart: (state) => {
-            state.isCartVisible = false; // Ocultar el carrito
+            state.isCartVisible = false;
         },
         setItemQuantity: (state, action: PayloadAction<{ id: number; quantity: number }>) => {
             const item = state.items.find(item => item.product.id === action.payload.id);
             if (item) {
-                item.quantity = action.payload.quantity; // Establecer la cantidad del producto
+                item.quantity = action.payload.quantity;
             }
+        },
+        clearCart: (state) => {
+            state.items = []; // Limpiar los productos
+            state.isCartVisible = false; // Opcional: ocultar el carrito
         },
     },
 });

@@ -1,10 +1,15 @@
-// store/orderSlice.ts
-'use client';
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { Product } from './cartSlice';  // Importa la interfaz Product
 
-interface Order {
-    id: number; // O cualquier identificador único
-    items: { productId: number; quantity: number }[];
+// Modifica el tipo OrderItem para que incluya los detalles del producto
+interface OrderItem {
+    product: Product;  // Almacena el producto completo
+    quantity: number;
+}
+
+export interface Order {
+    id: number;
+    items: OrderItem[];
     total: number;
 }
 
@@ -21,7 +26,7 @@ const orderSlice = createSlice({
     initialState,
     reducers: {
         createOrder: (state, action: PayloadAction<Order>) => {
-            state.orders.push(action.payload); // Agrega una nueva orden
+            state.orders.push(action.payload);
         },
     },
 });

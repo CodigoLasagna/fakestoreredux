@@ -1,11 +1,10 @@
-// components/Cart.tsx
-'use client';
 import React from 'react';
-import { useAppSelector, useAppDispatch } from '@/store/store'; // Asegúrate de importar useAppDispatch
-import { addToCart, removeFromCart, setItemQuantity } from '@/store/cartSlice'; // Importar las acciones necesarias
+import { useAppSelector, useAppDispatch } from '@/store/store';
+import { addToCart, removeFromCart, setItemQuantity, hideCart } from '@/store/cartSlice';
+import { createOrder } from '@/store/orderSlice';
 
 const Cart: React.FC = () => {
-    const dispatch = useAppDispatch(); // Inicializa dispatch
+    const dispatch = useAppDispatch();
     const cartItems = useAppSelector((state) => state.cart.items);
     const isCartVisible = useAppSelector((state) => state.cart.isCartVisible);
 
@@ -16,28 +15,22 @@ const Cart: React.FC = () => {
     cartItems.forEach(item => {
         const { id } = item.product;
         if (productCounts[id]) {
-            productCounts[id].quantity += item.quantity; // Sumar cantidad si ya existe
+            productCounts[id].quantity += item.quantity;
         } else {
-            productCounts[id] = { product: item.product, quantity: item.quantity }; // Agregar nuevo producto
+            productCounts[id] = { product: item.product, quantity: item.quantity };
         }
     });
 
-    const handleAddQuantity = (productId: number) => {
-        const productToAdd = cartItems.find(item => item.product.id === productId);
-        if (productToAdd) {
-            dispatch(addToCart(productToAdd.product)); // Agregar uno más del producto
-        }
-    };
-
-    const handleRemoveQuantity = (productId: number) => {
-        const productToRemove = cartItems.find(item => item.product.id === productId);
-        if (productToRemove) {
-            if (productToRemove.quantity > 1) {
-                dispatch(setItemQuantity({ id: productId, quantity: productToRemove.quantity - 1 })); // Reducir cantidad
-            } else {
-                dispatch(removeFromCart(productId)); // Eliminar el producto del carrito
-            }
-        }
+    const handleCheckout = () => {
+        const order = {
+            id: Date.now(), // O usar un ID más adecuado
+            items: cartItems.map(item => ({ productId: item.product.id, quantity: item.quantity })),
+            total: parseFloat(totalPrice),
+        };
+        
+        dispatch(createOrder(order)); // Crear la orden
+        dispatch(hideCart()); // Ocultar el carrito
+        dispatch({ type: 'cart/clearCart' }); // Limpiar el carrito
     };
 
     return (
@@ -53,20 +46,15 @@ const Cart: React.FC = () => {
                                 <img src={item.product.image} alt={item.product.title} className="h-12 w-12 object-cover mr-2" />
                                 <span className="flex-1">{item.product.title} - ${item.product.price} x {item.quantity}</span>
                                 <div className="flex space-x-2">
-                                    <button onClick={() => handleAddQuantity(item.product.id)} className="bg-blue-500 text-white rounded px-2 py-1">
-                                        +
-                                    </button>
-                                    <button onClick={() => handleRemoveQuantity(item.product.id)} className="bg-red-500 text-white rounded px-2 py-1">
-                                        -
-                                    </button>
-                                    <button onClick={() => dispatch(removeFromCart(item.product.id))} className="bg-gray-400 text-white rounded px-2 py-1">
-                                        Eliminar
-                                    </button>
+                                    <button onClick={() => handleAddQuantity(item.product.id)} className="bg-blue-500 text-white rounded px-2 py-1">+</button>
+                                    <button onClick={() => handleRemoveQuantity(item.product.id)} className="bg-red-500 text-white rounded px-2 py-1">-</button>
+                                    <button onClick={() => dispatch(removeFromCart(item.product.id))} className="bg-gray-400 text-white rounded px-2 py-1">Eliminar</button>
                                 </div>
                             </li>
                         ))}
                     </ul>
-                    <p className="font-bold">Total: ${totalPrice}</p> {/* Muestra el total con 2 decimales */}
+                    <p className="font-bold">Total: ${totalPrice}</p>
+                    <button onClick={handleCheckout} className="mt-4 bg-green-500 text-white rounded px-4 py-2">Checkout</button>
                 </div>
             )}
         </div>

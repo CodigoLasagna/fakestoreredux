@@ -1,6 +1,3 @@
-// components/ToolMenu.tsx
-'use client';
-
 import Link from 'next/link';
 import { useAppSelector } from '@/store/store'; // Asegúrate de importar useAppSelector
 
@@ -22,6 +19,13 @@ const ToolMenu: React.FC = () => {
                     <Link href="/about">
                         <button className="bg-blue-500 text-white font-semibold py-2 px-4 rounded hover:bg-blue-600 transition duration-200">
                             Acerca de
+                        </button>
+                    </Link>
+                </li>
+                <li>
+                    <Link href="/orders">
+                        <button className="bg-blue-500 text-white font-semibold py-2 px-4 rounded hover:bg-blue-600 transition duration-200">
+                            Órdenes
                         </button>
                     </Link>
                 </li>
