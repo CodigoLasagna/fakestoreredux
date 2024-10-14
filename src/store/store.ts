@@ -1,11 +1,13 @@
-import {configureStore} from '@reduxjs/toolkit';
+import { configureStore } from '@reduxjs/toolkit';
 import { TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux';
 import counterReducer from '@/store/counterSlice';
+import productsReducer from '@/store/productsSlice';
 
 const store = configureStore({
-	reducer: {
-		counter: counterReducer,
-	},
+    reducer: {
+        counter: counterReducer,
+        products: productsReducer,
+    },
 });
 
 // Tipos para el state y el dispatch
