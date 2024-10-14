@@ -40,6 +40,7 @@ const Cart: React.FC = () => {
             })),
             total: parseFloat(totalPrice),
             shipping: shippingInfo,
+            date: new Date().toISOString(), // Guardar la fecha actual en formato ISO
         };
         
         dispatch(createOrder(order));

@@ -1,3 +1,4 @@
+// orderSlice.ts
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { Product } from './cartSlice';  // Importa la interfaz Product
 
@@ -17,6 +18,7 @@ export interface Order {
     items: OrderItem[];
     total: number;
     shipping: ShippingInfo;  // Agregar detalles de envío
+    date: string; // Agregar fecha de la orden
 }
 
 interface OrderState {

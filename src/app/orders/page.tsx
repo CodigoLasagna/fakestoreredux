@@ -1,3 +1,4 @@
+// orders/page.tsx
 'use client';
 
 import React, { useState } from 'react';
@@ -29,10 +30,10 @@ const OrdersPage: React.FC = () => {
                                 Orden ID: {order.id}
                             </h2>
 
-                            {/* Mostrar detalles solo si la orden está expandida */}
                             {expandedOrderId === order.id && (
                                 <div className="mt-4">
                                     <p className="font-bold">Total: ${order.total.toFixed(2)}</p>
+                                    <p className="text-sm">Fecha: {new Date(order.date).toLocaleString()}</p> {/* Mostrar la fecha */}
                                     <h3 className="font-semibold mt-2">Productos:</h3>
                                     <ul className="space-y-2">
                                         {order.items.map((item, index) => (
