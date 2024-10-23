@@ -78,62 +78,91 @@ const Cart: React.FC = () => {
     };
 
     return (
-        <div className={`border p-4 ${isCartVisible ? 'block' : 'hidden'} fixed right-0 top-16 w-1/3`}>
-            <h2 className="text-xl font-bold">Carrito</h2>
-            {Object.keys(productCounts).length === 0 ? (
-                <p>No hay productos en el carrito.</p>
-            ) : (
-                <div>
-                    <ul className="flex flex-col space-y-2">
-                        {Object.values(productCounts).map((item) => (
-                            <li key={item.product.id} className="flex items-center">
-                                <img src={item.product.image} alt={item.product.title} className="h-12 w-12 object-cover mr-2" />
-                                <span className="flex-1">{item.product.title} - ${item.product.price} x {item.quantity}</span>
-                                <div className="flex space-x-2">
-                                    <button onClick={() => handleAddQuantity(item.product.id)} className="bg-blue-500 text-white rounded px-2 py-1">+</button>
-                                    <button onClick={() => handleRemoveQuantity(item.product.id)} className="bg-red-500 text-white rounded px-2 py-1">-</button>
-                                    <button onClick={() => dispatch(removeFromCart(item.product.id))} className="bg-gray-400 text-white rounded px-2 py-1">Eliminar</button>
-                                </div>
-                            </li>
-                        ))}
-                    </ul>
-                    <p className="font-bold">Total: ${totalPrice}</p>
-                    {error && <p className="text-red-500">{error}</p>}
-                    {isCheckoutFormVisible ? (
-                        <div className="mt-4">
-                            <h3 className="text-lg font-semibold">Información de Envío</h3>
-                            <input
-                                type="text"
-                                name="name"
-                                placeholder="Nombre"
-                                value={shippingInfo.name}
-                                onChange={handleInputChange}
-                                className="border p-2 w-full mb-2"
-                            />
-                            <input
-                                type="text"
-                                name="address"
-                                placeholder="Dirección"
-                                value={shippingInfo.address}
-                                onChange={handleInputChange}
-                                className="border p-2 w-full mb-2"
-                            />
-                            <input
-                                type="text"
-                                name="paymentMethod"
-                                placeholder="Método de Pago"
-                                value={shippingInfo.paymentMethod}
-                                onChange={handleInputChange}
-                                className="border p-2 w-full mb-2"
-                            />
-                            <button onClick={handleCheckout} className="mt-2 bg-green-500 text-white rounded px-4 py-2">Confirmar Orden</button>
-                        </div>
-                    ) : (
-                        <button onClick={handleShowCheckoutForm} className="mt-4 bg-green-500 text-white rounded px-4 py-2">Checkout</button>
-                    )}
-                </div>
-            )}
-        </div>
+		<div className={`border border-gray-700 bg-[#2C3A47] p-6 rounded-lg shadow-lg transition-transform duration-300 ease-in-out ${isCartVisible ? 'translate-x-0' : 'translate-x-full'} fixed right-0 top-16 w-1/3`}>
+		  <h2 className="text-2xl font-bold text-[#ECB22E] mb-4">Carrito</h2>
+		  {Object.keys(productCounts).length === 0 ? (
+		    <p className="text-white">No hay productos en el carrito.</p>
+		  ) : (
+		    <div>
+		      <ul className="flex flex-col space-y-4">
+		        {Object.values(productCounts).map((item) => (
+		          <li key={item.product.id} className="flex items-center">
+		            <img
+		              src={item.product.image}
+		              alt={item.product.title}
+		              className="h-12 w-12 object-cover rounded-lg mr-4"
+		            />
+		            <span className="flex-1 text-white">{item.product.title} - ${item.product.price} x {item.quantity}</span>
+		            <div className="flex space-x-2">
+		              <button
+		                onClick={() => handleAddQuantity(item.product.id)}
+		                className="bg-[#4D9BE6] text-white rounded-lg px-3 py-1 transition-transform duration-150 hover:scale-105"
+		              >
+		                +
+		              </button>
+		              <button
+		                onClick={() => handleRemoveQuantity(item.product.id)}
+		                className="bg-[#F23F42] text-white rounded-lg px-3 py-1 transition-transform duration-150 hover:scale-105"
+		              >
+		                -
+		              </button>
+		              <button
+		                onClick={() => dispatch(removeFromCart(item.product.id))}
+		                className="bg-gray-500 text-white rounded-lg px-3 py-1 transition-transform duration-150 hover:scale-105"
+		              >
+		                Eliminar
+		              </button>
+		            </div>
+		          </li>
+		        ))}
+		      </ul>
+		      <p className="font-bold text-[#81DC26] mt-4">Total: ${totalPrice}</p>
+		      {error && <p className="text-red-500 mt-2">{error}</p>}
+		      {isCheckoutFormVisible ? (
+		        <div className="mt-4">
+		          <h3 className="text-lg font-semibold text-white">Información de Envío</h3>
+		          <input
+		            type="text"
+		            name="name"
+		            placeholder="Nombre"
+		            value={shippingInfo.name}
+		            onChange={handleInputChange}
+		            className="border border-gray-600 bg-[#1B232B] text-white p-2 w-full mb-3 rounded-lg"
+		          />
+		          <input
+		            type="text"
+		            name="address"
+		            placeholder="Dirección"
+		            value={shippingInfo.address}
+		            onChange={handleInputChange}
+		            className="border border-gray-600 bg-[#1B232B] text-white p-2 w-full mb-3 rounded-lg"
+		          />
+		          <input
+		            type="text"
+		            name="paymentMethod"
+		            placeholder="Método de Pago"
+		            value={shippingInfo.paymentMethod}
+		            onChange={handleInputChange}
+		            className="border border-gray-600 bg-[#1B232B] text-white p-2 w-full mb-3 rounded-lg"
+		          />
+		          <button
+		            onClick={handleCheckout}
+		            className="bg-[#81DC26] text-white rounded-lg px-4 py-2 mt-4 w-full transition-transform duration-150 hover:scale-105"
+		          >
+		            Confirmar Orden
+		          </button>
+		        </div>
+		      ) : (
+		        <button
+		          onClick={handleShowCheckoutForm}
+		          className="bg-[#81DC26] text-black font-semibold rounded-lg px-4 py-2 mt-4 w-full transition-transform duration-150 hover:scale-105"
+		        >
+		          Checkout
+		        </button>
+		      )}
+		    </div>
+		  )}
+		</div>
     );
 };
 

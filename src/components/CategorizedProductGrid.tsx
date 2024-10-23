@@ -40,27 +40,34 @@ const CategorizedProductGrid: React.FC = () => {
         : products; // Si no hay categoría seleccionada, mostrar todos los productos
 
     return (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {filteredProducts.map((product) => (
-                <div
-                    key={product.id}
-                    className="border p-4 rounded cursor-pointer flex flex-col h-full"
-                    onClick={() => handleProductClick(product)}
-                >
-                    <img src={product.image} alt={product.title} className="h-32 w-full object-cover mb-4" />
-                    <h2 className="text-lg font-semibold flex-grow">{product.title}</h2>
-                    <p className="text-gray-600">${product.price}</p>
-                    <button 
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            handleAddToCart(product);
-                        }} 
-                        className="mt-2 bg-blue-500 text-white py-1 px-4 rounded">
-                        Agregar al carrito
-                    </button>
-                </div>
-            ))}
-        </div>
+		<div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 p-4 bg-[#1B232B]">
+		  {filteredProducts.map((product) => (
+		    <div
+		      key={product.id}
+		      className="border border-gray-700 bg-[#2C3A47] p-4 rounded-lg cursor-pointer flex flex-col h-full shadow-lg hover:shadow-xl transition-shadow duration-300 ease-in-out transform hover:scale-105"
+		      onClick={() => handleProductClick(product)}
+		    >
+		      <img
+		        src={product.image}
+		        alt={product.title}
+		        className="h-40 w-full object-cover mb-4 rounded-lg"
+		      />
+		      <h2 className="text-lg font-semibold text-white flex-grow mb-2">
+		        {product.title}
+		      </h2>
+		      <p className="text-[#4D9BE6] font-medium mb-4">${product.price}</p>
+		      <button
+		        onClick={(e) => {
+		          e.stopPropagation();
+		          handleAddToCart(product);
+		        }}
+		        className="mt-auto bg-[#81DC26] text-black py-2 px-4 rounded-md font-semibold hover:bg-[#ECB22E] transition-colors duration-300 ease-in-out"
+		      >
+		        Agregar al carrito
+		      </button>
+		    </div>
+		  ))}
+		</div>
     );
 };
 
