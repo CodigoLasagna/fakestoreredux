@@ -18,13 +18,16 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
   useEffect(() => {
     if (!currentPageRef.current) return;
-    if (!lastPageRef.current)
-      lastPageRef.current = currentPageRef.current.children;
 
-    exitAnimationDivRef.current?.appendChild(
-      lastPageRef.current![0].cloneNode(true)
-    );
-    lastPageRef.current = currentPageRef.current.children;
+    // Verificamos si lastPageRef tiene elementos antes de usarlo
+    if (!lastPageRef.current) {
+      lastPageRef.current = currentPageRef.current.children;
+    } else if (lastPageRef.current.length > 0) {
+      exitAnimationDivRef.current?.appendChild(
+        lastPageRef.current[0].cloneNode(true)
+      );
+      lastPageRef.current = currentPageRef.current.children;
+    }
   }, [pathname]);
 
   return (
