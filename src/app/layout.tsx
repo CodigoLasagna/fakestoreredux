@@ -14,7 +14,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 		    <Provider store={store}>
 		      <ToolMenu /> {/* Menú principal */}
 		      <div className="pt-20 px-6">
-		        {/* Padding superior ajustado para el menú fijo y espacio en los lados */}
 		        {children}
 		      </div>
 		    </Provider>
