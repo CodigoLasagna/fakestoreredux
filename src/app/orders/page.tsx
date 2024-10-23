@@ -44,7 +44,7 @@ const OrdersPage: React.FC = () => {
 	                        <h3 className="font-semibold mt-2 text-white">Productos:</h3>
 	                        <ul className="space-y-2">
 	                            {order.items.map((item, index) => (
-	                                <li key={index} className="flex items-start transition-transform duration-200 transform hover:scale-105">
+	                                <li key={index} className="flex items-start transition-transform duration-200 transform ">
 	                                    <img
 	                                        src={item.product.image}
 	                                        alt={item.product.title}
