@@ -15,27 +15,38 @@ model Product {
 	category String
 	image String
 	
-	cartItem CartItem[]
+	itemsCart ItemCart[]
+	itemsOrder ItemOrder[]
 }
 
-model Item {
+model ItemCart {
 	id Int @id @default(autoincrement())
 	quantity Int
 	
 	productId Int
-	product Product @relation(fields: [productId], references[id])
+	product Product @relation(fields: [productId], references: [id])
 	cartId Int
-	cart Cart @relation(fields: [cartId], references[id])
+	cart Cart @relation(fields: [cartId], references: [id])
+}
+
+model ItemOrder {
+	id Int @id @default(autoincrement())
+	quantity Int
+	
+	productId Int
+	product Product @relation(fields: [productId], references: [id])
+	orderId Int
+	order Order @relation(fields: [orderId], references: [id])
 }
 
 model Cart {
 	id Int @id @default(autoincrement())
-	items Item[]
+	items ItemCart[]
 }
 
 model Order{
 	id Int @id @default(autoincrement())
-	items Item[]
+	items ItemOrder[]
 	total Float
 	name String
 	address String
