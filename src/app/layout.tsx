@@ -10,7 +10,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { usePathname } from 'next/navigation';
 import { useEffect, useRef } from 'react';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
-import AuthPage from '@/pages/AuthPage'; // Asegúrate de importar AuthPage
+import AuthPage from '@/pages/AuthPage';
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();

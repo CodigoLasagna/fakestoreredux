@@ -1,6 +1,7 @@
 // src/pages/api/auth/register.ts
 import type { NextApiRequest, NextApiResponse } from 'next';
 import prisma from '../../../lib/prisma'; // Asegúrate de que la ruta sea correcta.
+const bcrypt = require('bcrypt')
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
     if (req.method === 'POST') {
@@ -15,14 +16,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 return res.status(400).json({ error: 'El correo ya está registrado' });
             }
 
+            // Hashea la contraseña antes de almacenarla
+            const hashedPassword = await bcrypt.hash(password, 10); // 10 es el número de salt rounds
+
             // Primero, crea un nuevo carrito
             const newCart = await prisma.cart.create({
                 data: {}, // Si tu modelo `Cart` requiere algún campo, debes proporcionarlo aquí
             });
 
-            // Ahora, crea el nuevo usuario con el cartId
+            // Ahora, crea el nuevo usuario con el cartId y la contraseña hasheada
             const newUser = await prisma.user.create({
-                data: { name, email, pass: password, cartId: newCart.id }, // Asocia el cartId
+                data: { name, email, pass: hashedPassword, cartId: newCart.id }, // Almacena la contraseña hasheada
             });
 
             return res.status(201).json({ user: newUser });

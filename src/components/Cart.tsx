@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useAppSelector, useAppDispatch } from '@/store/store';
 import { addToCart, removeFromCart, setItemQuantity, hideCart } from '@/store/cartSlice';
 import { createOrder } from '@/store/orderSlice';
+import { parseCookies } from 'nookies'
 
 const Cart: React.FC = () => {
     const dispatch = useAppDispatch();
@@ -25,34 +26,71 @@ const Cart: React.FC = () => {
     const [isCheckoutFormVisible, setCheckoutFormVisible] = useState(false);
     const [error, setError] = useState('');
 
-    const handleCheckout = () => {
-        // Validar la información de envío
-        if (!shippingInfo.name || !shippingInfo.address || !shippingInfo.paymentMethod) {
-            setError('Por favor, complete todos los campos.');
-            return;
-        }
-
-        const order = {
-            id: Date.now(),
-            items: cartItems.map(item => ({
-                product: item.product,
-                quantity: item.quantity
-            })),
-            total: parseFloat(totalPrice),
-            shipping: shippingInfo,
-            date: new Date().toISOString(), // Guardar la fecha actual en formato ISO
-        };
-        
-        dispatch(createOrder(order));
-        dispatch(hideCart());
-        dispatch({ type: 'cart/clearCart' });
-
-        // Limpiar el formulario después de crear la orden
-        setShippingInfo({ name: '', address: '', paymentMethod: '' });
-        setCheckoutFormVisible(false);
-        setError(''); // Reiniciar el mensaje de error
-    };
-
+	const handleCheckout = async () => {
+	    // Leer cookies
+	    const cookies = parseCookies();
+	    const userId = cookies.authToken; // Obtén el userId de la cookie 'authToken'
+	    console.log(cookies);
+	
+	    // Validar la información de envío
+	    if (!shippingInfo.name || !shippingInfo.address || !shippingInfo.paymentMethod) {
+	        setError('Por favor, complete todos los campos.');
+	        return;
+	    }
+	
+	    // Asegúrate de que el userId existe
+	    if (!userId) {
+	        setError('No se pudo encontrar el ID de usuario. Por favor, inicie sesión nuevamente.');
+	        return;
+	    }
+	
+	    const order = {
+	        items: cartItems.map(item => ({
+	            productId: item.product.id, // Usar el ID del producto
+	            quantity: item.quantity
+	        })),
+	        total: parseFloat(totalPrice),
+	        name: shippingInfo.name,
+	        address: shippingInfo.address,
+	        paymentMethod: shippingInfo.paymentMethod,
+	        userId: parseInt(userId, 10), // Añadir el ID del usuario aquí
+	    };
+	
+	    // Hacer la solicitud POST a la API
+	    try {
+	        const response = await fetch('/api/orders/createOrder', {
+	            method: 'POST',
+	            headers: {
+	                'Content-Type': 'application/json',
+	            },
+	            body: JSON.stringify(order),
+	        });
+	
+	        if (!response.ok) {
+	            const errorData = await response.json();
+	            console.error('Error al crear la orden:', errorData);
+	            setError('Error al crear la orden. Por favor, inténtelo de nuevo.');
+	            return;
+	        }
+	
+	        const createdOrder = await response.json();
+	        console.log('Orden creada:', createdOrder); // Verifica la respuesta
+	
+	        // Si deseas hacer algo con la orden creada, puedes hacerlo aquí
+	
+	    } catch (error) {
+	        console.error('Error en la solicitud:', error);
+	        setError('Error en la solicitud. Por favor, inténtelo de nuevo.');
+	    }
+	
+	    // Limpiar el carrito y el formulario después de crear la orden
+	    dispatch(hideCart());
+	    dispatch({ type: 'cart/clearCart' });
+	    setShippingInfo({ name: '', address: '', paymentMethod: '' });
+	    setCheckoutFormVisible(false);
+	    setError(''); // Reiniciar el mensaje de error
+	};
+	
     const handleAddQuantity = (id: number) => {
         dispatch(setItemQuantity({ id, quantity: productCounts[id].quantity + 1 }));
     };

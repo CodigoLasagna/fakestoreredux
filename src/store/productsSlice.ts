@@ -27,7 +27,27 @@ export const fetchProducts = createAsyncThunk('products/fetchProducts', async ()
     if (!response.ok) {
         throw new Error('Failed to fetch products');
     }
-    return (await response.json()) as Product[];
+
+    const products = await response.json();
+
+    // Intenta agregar todos los productos a la base de datos
+    const dbResponses = await Promise.all(products.map(product => 
+        fetch('/api/products/addProducts', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(product), // Enviar cada producto individualmente
+        })
+    ));
+
+    // Verificar si alguna de las respuestas no fue exitosa
+    const allSuccessful = dbResponses.every(dbResponse => dbResponse.ok);
+    if (!allSuccessful) {
+        throw new Error('Failed to insert one or more products into the database');
+    }
+    
+    return products as Product[];
 });
 
 const productsSlice = createSlice({
