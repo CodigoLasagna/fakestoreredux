@@ -4,13 +4,14 @@ import { addToCart, removeFromCart, setItemQuantity, hideCart, loadCart } from '
 import { createOrder } from '@/store/orderSlice';
 import { parseCookies } from 'nookies';
 
+import { toast } from 'react-toastify';
+
 const Cart: React.FC = () => {
     const dispatch = useAppDispatch();
     const cartItems = useAppSelector((state) => state.cart.items);
     const isCartVisible = useAppSelector((state) => state.cart.isCartVisible);
     const [error, setError] = useState('');
 
-    // Estado para manejar el total
     const totalPrice = cartItems.reduce((total, item) => total + item.product.price * item.quantity, 0).toFixed(2);
 
     const productCounts: { [key: number]: { product: any; quantity: number } } = {};
@@ -27,112 +28,196 @@ const Cart: React.FC = () => {
     const [shippingInfo, setShippingInfo] = useState({ name: '', address: '', paymentMethod: '' });
     const [isCheckoutFormVisible, setCheckoutFormVisible] = useState(false);
 
-    // Función para obtener el carrito desde la API
-const fetchCart = async () => {
-    const cookies = parseCookies();
-    const userId = cookies.authToken;
+    const fetchCart = async () => {
+        const cookies = parseCookies();
+        const userId = cookies.authToken;
 
-    if (!userId) {
-        setError('No se pudo encontrar el ID de usuario. Por favor, inicie sesión nuevamente.');
-        return;
-    }
-
-    try {
-        const response = await fetch('/api/cart/getCart', {
-            method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${userId}`,
-            },
-        });
-
-        if (!response.ok) {
-            const errorData = await response.json();
-            console.error('Error al obtener el carrito:', errorData);
-            setError('Error al obtener el carrito. Por favor, inténtelo de nuevo.');
+        if (!userId) {
+            setError('No se pudo encontrar el ID de usuario. Por favor, inicie sesión nuevamente.');
             return;
         }
 
-        const cartData = await response.json();
-
-        // Asegúrate de que cartData.items tenga la estructura correcta
-        if (Array.isArray(cartData.items)) {
-            // Despachar los items del carrito a Redux
-            const itemsToDispatch = cartData.items.map((item: any) => ({
-                product: item.product,
-                quantity: item.quantity,
-            }));
-            dispatch(loadCart(itemsToDispatch)); // Usar loadCart para cargar todos los elementos
-        } else {
-            console.error('La respuesta de cartData.items no es un array:', cartData.items);
-            setError('Error en los datos del carrito. Por favor, inténtelo de nuevo.');
-        }
-    } catch (error) {
-        console.error('Error en la solicitud:', error);
-        setError('Error en la solicitud. Por favor, inténtelo de nuevo.');
-    }
-};
-
-    // Efecto que se ejecuta al montar el componente
-    useEffect(() => {
-        fetchCart();
-    }, []);
-
-    const handleCheckout = async () => {
-        // Validar la información de envío
-        if (!shippingInfo.name || !shippingInfo.address || !shippingInfo.paymentMethod) {
-            setError('Por favor, complete todos los campos.');
-            return;
-        }
-
-        const order = {
-            items: cartItems.map(item => ({
-                productId: item.product.id,
-                quantity: item.quantity,
-            })),
-            total: parseFloat(totalPrice),
-            name: shippingInfo.name,
-            address: shippingInfo.address,
-            paymentMethod: shippingInfo.paymentMethod,
-        };
-
-        // Hacer la solicitud POST a la API
         try {
-            const response = await fetch('/api/orders/createOrder', {
-                method: 'POST',
+            const response = await fetch('/api/cart/getCart', {
+                method: 'GET',
                 headers: {
-                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${userId}`,
                 },
-                body: JSON.stringify(order),
             });
 
             if (!response.ok) {
                 const errorData = await response.json();
-                console.error('Error al crear la orden:', errorData);
-                setError('Error al crear la orden. Por favor, inténtelo de nuevo.');
+                console.error('Error al obtener el carrito:', errorData);
+                setError('Error al obtener el carrito. Por favor, inténtelo de nuevo.');
                 return;
             }
 
-            // Limpiar el carrito y el formulario después de crear la orden
-            dispatch(hideCart());
-            dispatch({ type: 'cart/clearCart' });
-            setShippingInfo({ name: '', address: '', paymentMethod: '' });
-            setCheckoutFormVisible(false);
+            const cartData = await response.json();
+
+            if (Array.isArray(cartData.items)) {
+                const itemsToDispatch = cartData.items.map((item: any) => ({
+                    product: item.product,
+                    quantity: item.quantity,
+                }));
+                dispatch(loadCart(itemsToDispatch));
+            } else {
+                console.error('La respuesta de cartData.items no es un array:', cartData.items);
+                setError('Error en los datos del carrito. Por favor, inténtelo de nuevo.');
+            }
         } catch (error) {
             console.error('Error en la solicitud:', error);
             setError('Error en la solicitud. Por favor, inténtelo de nuevo.');
         }
     };
 
-    const handleAddQuantity = (id: number) => {
-        dispatch(setItemQuantity({ id, quantity: productCounts[id].quantity + 1 }));
+    useEffect(() => {
+        fetchCart();
+    }, []);
+
+
+const handleCheckout = async () => {
+    if (!shippingInfo.name || !shippingInfo.address || !shippingInfo.paymentMethod) {
+        setError('Por favor, complete todos los campos.');
+        return;
+    }
+
+    const cookies = parseCookies();
+    const userId = parseInt(cookies.authToken, 10); // Asegúrate de que este valor sea el ID del usuario
+
+    const order = {
+        items: cartItems.map(item => ({
+            productId: item.product.id,
+            quantity: item.quantity,
+        })),
+        total: parseFloat(totalPrice),
+        name: shippingInfo.name,
+        address: shippingInfo.address,
+        paymentMethod: shippingInfo.paymentMethod,
+        userId: userId,
     };
 
-    const handleRemoveQuantity = (id: number) => {
-        const newQuantity = productCounts[id].quantity - 1;
-        if (newQuantity > 0) {
-            dispatch(setItemQuantity({ id, quantity: newQuantity }));
+    try {
+        const response = await fetch('/api/orders/createOrder', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(order),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            console.error('Error al crear la orden:', errorData);
+            setError('Error al crear la orden. Por favor, inténtelo de nuevo.');
+            return;
+        }
+
+        // Llamar al nuevo endpoint para eliminar todos los productos del carrito
+        const removeResponse = await fetch('/api/cart/removeAllItems', {
+            method: 'DELETE', // Cambiar a DELETE
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            // No se necesita body, el userId se obtiene en el backend
+        });
+
+        if (!removeResponse.ok) {
+            const removeErrorData = await removeResponse.json();
+            console.error('Error al eliminar productos del carrito:', removeErrorData);
+            setError('Error al limpiar el carrito. Por favor, inténtelo de nuevo.');
+            return;
+        }
+
+        dispatch(hideCart());
+        dispatch({ type: 'cart/clearCart' });
+        setShippingInfo({ name: '', address: '', paymentMethod: '' });
+        setCheckoutFormVisible(false);
+    } catch (error) {
+        console.error('Error en la solicitud:', error);
+        setError('Error en la solicitud. Por favor, inténtelo de nuevo.');
+    }
+};
+
+    const handleRemoveFromCart = async (id: number) => {
+        try {
+            const response = await fetch('/api/cart/removeItem', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ itemId: id }), // Cambiar 'id' a 'itemId'
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Error al eliminar el producto del carrito');
+            }
+
+            dispatch(removeFromCart(id)); // Eliminar el producto del carrito
+
+        } catch (error) {
+            console.error('Error al eliminar el producto del carrito:', error);
+            toast.error('Hubo un problema al eliminar el producto del carrito.'); // Mensaje de error
         }
     };
+
+const handleAddQuantity = async (id: number) => {
+    try {
+        // Hacer una solicitud a la API para agregar una unidad del producto
+        const response = await fetch('/api/cart/addItem', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ itemId: id, quantity: 1 }), // Aumentar en 1
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Error al agregar el producto al carrito');
+        }
+
+        // Actualizar el estado en Redux según la nueva cantidad
+        const currentQuantity = productCounts[id]?.quantity || 0; // Obtener la cantidad actual del producto
+        dispatch(setItemQuantity({ id, quantity: currentQuantity + 1 }));
+
+    } catch (error) {
+        console.error('Error al agregar cantidad del producto:', error);
+        toast.error('Hubo un problema al agregar la cantidad del producto.'); // Mensaje de error
+    }
+};
+
+const handleRemoveQuantity = async (id: number) => {
+    const currentQuantity = productCounts[id].quantity; // Obtener la cantidad actual del producto
+    const newQuantity = currentQuantity - 1; // Disminuir la cantidad
+
+    try {
+        // Hacer una solicitud a la API para actualizar la cantidad
+        const response = await fetch('/api/cart/removeItem', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ itemId: id }), // Cambiar 'id' a 'itemId'
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Error al disminuir la cantidad del producto');
+        }
+
+        // Actualizar el estado en Redux según la nueva cantidad
+        if (newQuantity > 0) {
+            dispatch(setItemQuantity({ id, quantity: newQuantity }));
+        } else {
+            dispatch(removeFromCart(id)); // Eliminar el producto si la cantidad es 0
+        }
+
+    } catch (error) {
+        console.error('Error al modificar la cantidad del producto:', error);
+        toast.error('Hubo un problema al modificar la cantidad del producto.'); // Mensaje de error
+    }
+};
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
@@ -177,7 +262,7 @@ const fetchCart = async () => {
                                         -
                                     </button>
                                     <button
-                                        onClick={() => dispatch(removeFromCart(item.product.id))}
+                                        onClick={() => handleRemoveFromCart(item.product.id)}
                                         className="bg-gray-500 text-white rounded-lg px-3 py-1 transition-transform duration-150 hover:scale-105"
                                     >
                                         Eliminar
@@ -215,20 +300,10 @@ const fetchCart = async () => {
                                 onChange={handleInputChange}
                                 className="border border-gray-600 bg-[#1B232B] text-white p-2 w-full mb-3 rounded-lg"
                             />
-                            <button
-                                onClick={handleCheckout}
-                                className="bg-[#81DC26] text-white rounded-lg px-4 py-2 mt-4 w-full transition-transform duration-150 hover:scale-105"
-                            >
-                                Confirmar Orden
-                            </button>
+                            <button onClick={handleCheckout} className="bg-[#4D9BE6] text-white rounded-lg px-4 py-2">Pagar</button>
                         </div>
                     ) : (
-                        <button
-                            onClick={handleShowCheckoutForm}
-                            className="bg-[#81DC26] text-black font-semibold rounded-lg px-4 py-2 mt-4 w-full transition-transform duration-150 hover:scale-105"
-                        >
-                            Proceder a Checkout
-                        </button>
+                        <button onClick={handleShowCheckoutForm} className="bg-[#4D9BE6] text-white rounded-lg px-4 py-2 mt-4">Proceder al Pago</button>
                     )}
                 </div>
             )}

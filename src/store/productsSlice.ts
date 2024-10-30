@@ -30,24 +30,21 @@ export const fetchProducts = createAsyncThunk('products/fetchProducts', async ()
 
     const products = await response.json();
 
-    // Intenta agregar todos los productos a la base de datos
-    const dbResponses = await Promise.all(products.map(product => 
-        fetch('/api/products/addProducts', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(product), // Enviar cada producto individualmente
-        })
-    ));
+    // Agregar todos los productos a la base de datos en una sola solicitud
+    const dbResponse = await fetch('/api/products/addProducts', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(products), // Enviar todos los productos como un array
+    });
 
-    // Verificar si alguna de las respuestas no fue exitosa
-    const allSuccessful = dbResponses.every(dbResponse => dbResponse.ok);
-    if (!allSuccessful) {
-        throw new Error('Failed to insert one or more products into the database');
+    // Verificar si la respuesta de la base de datos fue exitosa
+    if (!dbResponse.ok) {
+        throw new Error('Failed to insert products into the database');
     }
-    
-    return products as Product[];
+
+    return products; // Retornar los productos solo si la inserción fue exitosa
 });
 
 const productsSlice = createSlice({

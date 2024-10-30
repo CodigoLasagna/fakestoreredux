@@ -5,7 +5,7 @@ import { useAppDispatch, useAppSelector } from '@/store/store';
 import { fetchProducts } from '@/store/productsSlice';
 import { selectProduct } from '@/store/selectedProductSlice';
 import { addToCart, hideCart, toggleCartVisibility } from '@/store/cartSlice';
-import { toast } from 'react-toastify'; // Importar toast
+import { toast } from 'react-toastify';
 
 const CategorizedProductGrid: React.FC = () => {
     const dispatch = useAppDispatch();
@@ -16,34 +16,64 @@ const CategorizedProductGrid: React.FC = () => {
         dispatch(fetchProducts());
     }, [dispatch]);
 
+    const isAuthenticated = () => {
+        const token = document.cookie.split('; ').find(row => row.startsWith('authToken='));
+        return token !== undefined; // Devuelve true si el usuario está autenticado
+    };
+
     const handleProductClick = (product: any) => {
         dispatch(selectProduct(product));
         dispatch(hideCart());
     };
 
-    const handleAddToCart = (product: any) => {
-        dispatch(addToCart(product));
+    const handleAddToCart = async (product: any) => {
+        if (!isAuthenticated()) {
+            toast.error('Debes iniciar sesión para agregar productos al carrito.');
+            return;
+        }
 
-        // Mostrar notificación de éxito con la imagen del producto
-        toast.success(
-            <div className="flex items-center">
-                <img
-                    src={product.image} // URL de la imagen del producto
-                    alt={product.title}
-                    className="w-24 h-24 rounded mr-2" // Estilo de la imagen
-                />
-                <span>{`${product.title} ha sido agregado al carrito!`}</span>
-            </div>,
-            {
-                autoClose: 1200, // Tiempo de cierre automático
-                closeOnClick: true,
-                pauseOnHover: true,
-                draggable: true,
+        try {
+            const response = await fetch('/api/cart/addItem', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    itemId: product.id,
+                    quantity: 1, // Puedes modificar la cantidad si es necesario
+                }),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Error al agregar el producto al carrito');
             }
-        );
 
-        dispatch(toggleCartVisibility()); // Mostrar el carrito
-        dispatch(selectProduct(null)); // Ocultar el panel de detalles
+            dispatch(addToCart(product));
+
+            toast.success(
+                <div className="flex items-center">
+                    <img
+                        src={product.image}
+                        alt={product.title}
+                        className="w-24 h-24 rounded mr-2"
+                    />
+                    <span>{`${product.title} ha sido agregado al carrito!`}</span>
+                </div>,
+                {
+                    autoClose: 1200,
+                    closeOnClick: true,
+                    pauseOnHover: true,
+                    draggable: true,
+                }
+            );
+
+            dispatch(toggleCartVisibility());
+            dispatch(selectProduct(null)); // Ocultar el panel de detalles
+        } catch (error) {
+            console.error('Error al agregar al carrito:', error);
+            toast.error('Hubo un problema al agregar el producto al carrito.');
+        }
     };
 
     if (loading) {
@@ -57,7 +87,7 @@ const CategorizedProductGrid: React.FC = () => {
     // Filtrar productos por categoría seleccionada
     const filteredProducts = selectedCategory
         ? products.filter((product) => product.category === selectedCategory)
-        : products; // Si no hay categoría seleccionada, mostrar todos los productos
+        : products;
 
     return (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 p-4 bg-[#1B232B]">

@@ -21,8 +21,14 @@ export default async function getCart(req: NextApiRequest, res: NextApiResponse)
         },
       });
 
-      if (!cart || cart.items.length === 0) {
-        return res.status(404).json({ message: 'Carrito no encontrado o vacío.' });
+      // Si el carrito no existe, retornar una respuesta indicando que no se encontró
+      if (!cart) {
+        return res.status(200).json({ message: 'Carrito no encontrado.', items: [] });
+      }
+
+      // Si el carrito está vacío, devolver una respuesta indicando que está vacío
+      if (cart.items.length === 0) {
+        return res.status(200).json({ message: 'Carrito vacío.', items: [] });
       }
 
       // Formatear los datos

@@ -1,49 +1,49 @@
-import type { NextApiRequest, NextApiResponse } from 'next';
+import { NextApiRequest, NextApiResponse } from 'next';
 import prisma from '@/lib/prisma';
-import { getUserIdFromCookie } from '@/lib/middleware';
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+export default async function removeItemFromCart(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === 'POST') {
-    const userId = getUserIdFromCookie(req, res);
-    if (!userId) return; // Finaliza si el usuario no está autenticado
+    const { itemId } = req.body;
 
-    const { productId } = req.body;
+    if (!itemId) {
+      return res.status(400).json({ message: 'itemId es requerido.' });
+    }
 
     try {
-      // Obtener el carrito del usuario
-      const cart = await prisma.cart.findUnique({ where: { userId } });
-      if (!cart) {
-        return res.status(404).json({ message: 'Carrito no encontrado' });
+      const userId = getUserIdFromSession(req);
+      if (!userId) {
+        return res.status(401).json({ message: 'Usuario no autenticado.' });
       }
 
-      // Buscar el producto en el carrito
-      const existingItem = await prisma.itemCart.findFirst({
-        where: { productId, cartId: cart.id },
+      // Obtener el carrito del usuario
+      const cart = await prisma.cart.findUnique({
+        where: { userId: userId },
+        include: { items: true },
       });
 
-      if (!existingItem) {
-        return res.status(404).json({ message: 'Producto no encontrado en el carrito' });
+      if (!cart) {
+        return res.status(404).json({ message: 'Carrito no encontrado.' });
       }
 
-      if (existingItem.quantity > 1) {
-        // Disminuir la cantidad en 1 si hay más de uno
-        await prisma.itemCart.update({
-          where: { id: existingItem.id },
-          data: { quantity: existingItem.quantity - 1 },
-        });
-      } else {
-        // Eliminar el producto del carrito si la cantidad llega a 0
-        await prisma.itemCart.delete({
-          where: { id: existingItem.id },
-        });
-      }
+      // Eliminar todos los productos del mismo tipo
+      await prisma.itemCart.deleteMany({
+        where: {
+          cartId: cart.id,
+          productId: itemId,
+        },
+      });
 
-      res.status(200).json({ message: 'Producto eliminado o cantidad disminuida' });
+      return res.status(200).json({ message: 'Todos los productos del tipo especificado han sido eliminados del carrito.' });
     } catch (error) {
-      console.error('Error al eliminar producto del carrito:', error);
-      res.status(500).json({ message: 'Error interno del servidor' });
+      console.error('Error al eliminar productos del carrito:', error);
+      return res.status(500).json({ message: 'Error interno del servidor.' });
     }
   } else {
-    res.status(405).json({ message: 'Método no permitido' });
+    res.status(405).json({ message: 'Método no permitido.' });
   }
+}
+
+// Función ficticia para obtener el ID del usuario de la sesión
+function getUserIdFromSession(req: NextApiRequest): number | null {
+  return 1; // Cambia esto por el ID real del usuario
 }

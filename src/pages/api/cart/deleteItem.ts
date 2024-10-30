@@ -5,9 +5,13 @@ import { getUserIdFromCookie } from '@/lib/middleware';
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === 'DELETE') {
     const userId = getUserIdFromCookie(req, res);
-    if (!userId) return; // Finaliza si el usuario no está autenticado
+    if (!userId) return res.status(401).json({ message: 'Usuario no autenticado.' }); // Finaliza si el usuario no está autenticado
 
     const { productId } = req.body;
+
+    if (!productId) {
+      return res.status(400).json({ message: 'productId es requerido.' });
+    }
 
     try {
       // Obtener el carrito del usuario
@@ -16,22 +20,26 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return res.status(404).json({ message: 'Carrito no encontrado' });
       }
 
-      // Buscar y eliminar el producto en el carrito
-      const existingItem = await prisma.itemCart.findFirst({
+      // Buscar y eliminar todos los productos del carrito que coincidan con el productId
+      const existingItems = await prisma.itemCart.findMany({
         where: { productId, cartId: cart.id },
       });
 
-      if (!existingItem) {
-        return res.status(404).json({ message: 'Producto no encontrado en el carrito' });
+      if (existingItems.length === 0) {
+        return res.status(404).json({ message: 'No se encontraron productos en el carrito para eliminar.' });
       }
 
-      await prisma.itemCart.delete({
-        where: { id: existingItem.id },
+      // Eliminar todos los items encontrados
+      await prisma.itemCart.deleteMany({
+        where: {
+          productId,
+          cartId: cart.id,
+        },
       });
 
-      res.status(200).json({ message: 'Producto eliminado del carrito' });
+      res.status(200).json({ message: 'Productos eliminados del carrito' });
     } catch (error) {
-      console.error('Error al eliminar producto del carrito:', error);
+      console.error('Error al eliminar productos del carrito:', error);
       res.status(500).json({ message: 'Error interno del servidor' });
     }
   } else {
