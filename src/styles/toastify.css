@@ -1,0 +1,15 @@
+/* src/styles/toastify.css */
+.Toastify__Toast {
+    background: #2C3A47; /* Color de fondo */
+    color: #ffffff; /* Color de texto */
+    border-radius: 0.5rem; /* Esquinas redondeadas */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Sombra */
+}
+
+.Toastify__toast--success {
+    background: #2C3A47; /* Color para éxito */
+}
+
+.Toastify__toast--error {
+    background: #F44336; /* Color para error */
+}

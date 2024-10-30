@@ -36,7 +36,7 @@ const cartSlice = createSlice({
             } else {
                 state.items.push({ product: action.payload, quantity: 1 });
             }
-            state.isCartVisible = true;
+            state.isCartVisible = true; // Mostrar carrito al agregar un producto
         },
         removeFromCart: (state, action: PayloadAction<number>) => {
             state.items = state.items.filter(item => item.product.id !== action.payload);
@@ -55,10 +55,13 @@ const cartSlice = createSlice({
         },
         clearCart: (state) => {
             state.items = []; // Limpiar los productos
-            state.isCartVisible = false; // Opcional: ocultar el carrito
+            state.isCartVisible = false; // Ocultar el carrito
+        },
+        loadCart: (state, action: PayloadAction<CartItem[]>) => {
+            state.items = action.payload; // Cargar los elementos del carrito desde la base de datos
         },
     },
 });
 
-export const { addToCart, removeFromCart, toggleCartVisibility, hideCart, setItemQuantity } = cartSlice.actions;
+export const { addToCart, removeFromCart, toggleCartVisibility, hideCart, setItemQuantity, clearCart, loadCart } = cartSlice.actions;
 export default cartSlice.reducer;
