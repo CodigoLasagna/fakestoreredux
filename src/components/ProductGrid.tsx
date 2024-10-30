@@ -16,34 +16,69 @@ const ProductGrid: React.FC = () => {
         dispatch(fetchProducts());
     }, [dispatch]);
 
+    const isAuthenticated = () => {
+        // Implementa la lógica para verificar si el usuario está autenticado
+        // Puedes verificar si el token está en cookies, Redux o localStorage
+        const token = document.cookie.split('; ').find(row => row.startsWith('authToken='));
+        return token !== undefined; // Devuelve true si el usuario está autenticado
+    };
+
     const handleProductClick = (product: any) => {
         dispatch(selectProduct(product));
         dispatch(hideCart()); // Ocultar el carrito al seleccionar un producto
     };
 
-    const handleAddToCart = (product: any) => {
-        dispatch(addToCart(product)); // Agregar el producto al carrito
-        
-        // Mostrar notificación de éxito con la imagen del producto
-        toast.success(
-            <div className="flex items-center">
-                <img
-                    src={product.image} // URL de la imagen del producto
-                    alt={product.title}
-                    className="w-24 h-24 rounded mr-2" // Estilo de la imagen
-                />
-                <span>{`${product.title} ha sido agregado al carrito!`}</span>
-            </div>,
-            {
-                autoClose: 1200, // Tiempo de cierre automático
-                closeOnClick: true,
-                pauseOnHover: true,
-                draggable: true,
-            }
-        );
+    const handleAddToCart = async (product: any) => {
+        if (!isAuthenticated()) {
+            toast.error('Debes iniciar sesión para agregar productos al carrito.');
+            return;
+        }
 
-        dispatch(toggleCartVisibility()); // Mostrar el carrito
-        dispatch(selectProduct(null)); // Ocultar el panel de detalles
+        try {
+            // Enviar solicitud a la API para agregar el producto al carrito
+            const response = await fetch('/api/cart/addItem', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    itemId: product.id, // Cambiado a itemId
+                    quantity: 1, // Puedes modificar la cantidad si es necesario
+                }),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Error al agregar el producto al carrito');
+            }
+
+            // Agregar el producto al carrito en el estado de Redux
+            dispatch(addToCart(product));
+
+            // Mostrar notificación de éxito con la imagen del producto
+            toast.success(
+                <div className="flex items-center">
+                    <img
+                        src={product.image}
+                        alt={product.title}
+                        className="w-24 h-24 rounded mr-2"
+                    />
+                    <span>{`${product.title} ha sido agregado al carrito!`}</span>
+                </div>,
+                {
+                    autoClose: 1200,
+                    closeOnClick: true,
+                    pauseOnHover: true,
+                    draggable: true,
+                }
+            );
+
+            dispatch(toggleCartVisibility()); // Mostrar el carrito
+            dispatch(selectProduct(null)); // Ocultar el panel de detalles
+        } catch (error) {
+            console.error('Error al agregar al carrito:', error);
+            toast.error('Hubo un problema al agregar el producto al carrito.');
+        }
     };
 
     if (loading) {

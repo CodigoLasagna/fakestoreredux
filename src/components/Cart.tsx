@@ -1,13 +1,16 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAppSelector, useAppDispatch } from '@/store/store';
-import { addToCart, removeFromCart, setItemQuantity, hideCart } from '@/store/cartSlice';
+import { addToCart, removeFromCart, setItemQuantity, hideCart, loadCart } from '@/store/cartSlice';
+import { createOrder } from '@/store/orderSlice';
 import { parseCookies } from 'nookies';
 
 const Cart: React.FC = () => {
     const dispatch = useAppDispatch();
     const cartItems = useAppSelector((state) => state.cart.items);
     const isCartVisible = useAppSelector((state) => state.cart.isCartVisible);
+    const [error, setError] = useState('');
 
+    // Estado para manejar el total
     const totalPrice = cartItems.reduce((total, item) => total + item.product.price * item.quantity, 0).toFixed(2);
 
     const productCounts: { [key: number]: { product: any; quantity: number } } = {};
@@ -23,35 +26,73 @@ const Cart: React.FC = () => {
 
     const [shippingInfo, setShippingInfo] = useState({ name: '', address: '', paymentMethod: '' });
     const [isCheckoutFormVisible, setCheckoutFormVisible] = useState(false);
-    const [error, setError] = useState('');
+
+    // Función para obtener el carrito desde la API
+const fetchCart = async () => {
+    const cookies = parseCookies();
+    const userId = cookies.authToken;
+
+    if (!userId) {
+        setError('No se pudo encontrar el ID de usuario. Por favor, inicie sesión nuevamente.');
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/cart/getCart', {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${userId}`,
+            },
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            console.error('Error al obtener el carrito:', errorData);
+            setError('Error al obtener el carrito. Por favor, inténtelo de nuevo.');
+            return;
+        }
+
+        const cartData = await response.json();
+
+        // Asegúrate de que cartData.items tenga la estructura correcta
+        if (Array.isArray(cartData.items)) {
+            // Despachar los items del carrito a Redux
+            const itemsToDispatch = cartData.items.map((item: any) => ({
+                product: item.product,
+                quantity: item.quantity,
+            }));
+            dispatch(loadCart(itemsToDispatch)); // Usar loadCart para cargar todos los elementos
+        } else {
+            console.error('La respuesta de cartData.items no es un array:', cartData.items);
+            setError('Error en los datos del carrito. Por favor, inténtelo de nuevo.');
+        }
+    } catch (error) {
+        console.error('Error en la solicitud:', error);
+        setError('Error en la solicitud. Por favor, inténtelo de nuevo.');
+    }
+};
+
+    // Efecto que se ejecuta al montar el componente
+    useEffect(() => {
+        fetchCart();
+    }, []);
 
     const handleCheckout = async () => {
-        // Leer cookies
-        const cookies = parseCookies();
-        const userId = cookies.authToken; // Obtén el userId de la cookie 'authToken'
-        
         // Validar la información de envío
         if (!shippingInfo.name || !shippingInfo.address || !shippingInfo.paymentMethod) {
             setError('Por favor, complete todos los campos.');
             return;
         }
 
-        // Asegúrate de que el userId existe
-        if (!userId) {
-            setError('No se pudo encontrar el ID de usuario. Por favor, inicie sesión nuevamente.');
-            return;
-        }
-
         const order = {
             items: cartItems.map(item => ({
-                productId: item.product.id, // Usar el ID del producto
-                quantity: item.quantity
+                productId: item.product.id,
+                quantity: item.quantity,
             })),
             total: parseFloat(totalPrice),
             name: shippingInfo.name,
             address: shippingInfo.address,
             paymentMethod: shippingInfo.paymentMethod,
-            userId: parseInt(userId, 10), // Añadir el ID del usuario aquí
         };
 
         // Hacer la solicitud POST a la API
@@ -71,20 +112,15 @@ const Cart: React.FC = () => {
                 return;
             }
 
-            const createdOrder = await response.json();
-            console.log('Orden creada:', createdOrder); // Verifica la respuesta
-
+            // Limpiar el carrito y el formulario después de crear la orden
+            dispatch(hideCart());
+            dispatch({ type: 'cart/clearCart' });
+            setShippingInfo({ name: '', address: '', paymentMethod: '' });
+            setCheckoutFormVisible(false);
         } catch (error) {
             console.error('Error en la solicitud:', error);
             setError('Error en la solicitud. Por favor, inténtelo de nuevo.');
         }
-
-        // Limpiar el carrito y el formulario después de crear la orden
-        dispatch(hideCart());
-        dispatch({ type: 'cart/clearCart' });
-        setShippingInfo({ name: '', address: '', paymentMethod: '' });
-        setCheckoutFormVisible(false);
-        setError(''); // Reiniciar el mensaje de error
     };
 
     const handleAddQuantity = (id: number) => {
@@ -191,7 +227,7 @@ const Cart: React.FC = () => {
                             onClick={handleShowCheckoutForm}
                             className="bg-[#81DC26] text-black font-semibold rounded-lg px-4 py-2 mt-4 w-full transition-transform duration-150 hover:scale-105"
                         >
-                            Checkout
+                            Proceder a Checkout
                         </button>
                     )}
                 </div>

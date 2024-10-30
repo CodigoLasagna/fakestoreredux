@@ -10,16 +10,24 @@ generator client {
 model User {
 	id Int @id @default(autoincrement())
 	name String
-	email  String @unique
-	pass   String
-	cartId Int? @unique
-	cart Cart?  @relation(fields: [cartId], references: [id])
+	email String @unique
+	pass String
+	//cartId Int? @unique
+	cart Cart? @relation
 	Orders Order[]
+}
+
+
+model Cart {
+	id Int @id @default(autoincrement())
+	userId Int? @unique// Agregar este campo
+	user User?  @relation(fields: [userId], references: [id])// Relación con User
+	items ItemCart[]
 }
 
 model Product {
 	id Int @id @default(autoincrement())
-	title String  @unique
+	title String @unique
 	price Float
 	description String @db.VarChar(1000)
 	category String
@@ -49,13 +57,7 @@ model ItemOrder {
 	order Order @relation(fields: [orderId], references: [id])
 }
 
-model Cart {
-	id Int @id @default(autoincrement())
-	items ItemCart[]
-	user User?
-}
-
-model Order{
+model Order {
 	id Int @id @default(autoincrement())
 	items ItemOrder[]
 	total Float
